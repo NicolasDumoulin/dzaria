@@ -21,6 +21,8 @@
             #board td { width:150px; height:150px; }
             .board-dice { width:140px; height: 140px;}
 
+	    #player0, #board, #player1 { float:left; margin-left:50px;margin-right:50px; }
+            
             .button-primary.ui-state-default, .button-primary.ui-widget-content .button-primary.ui-state-default, .button-primary.ui-widget-header .button-primary.ui-state-default { border: 1px solid #407998; background: #004c75 50% 50% repeat-x; font-weight: normal; color: #ffffff; }
             .button-primary.ui-state-default a, .button-primary.ui-state-default a:link, .button-primary.ui-state-default a:visited { color: #ffffff; text-decoration: none; }
             .button-primary.ui-state-hover, .button-primary.ui-widget-content .button-primary.ui-state-hover, .button-primary.ui-widget-header .button-primary.ui-state-hover, .button-primary.ui-state-focus, .button-primary.ui-widget-content .button-primary.ui-state-focus, .button-primary.ui-widget-header .button-primary.ui-state-focus { border: 1px solid #407998; background: #407998 50% 50% repeat-x; font-weight: normal; color: #ffffff; }
@@ -70,10 +72,11 @@
             var playingNow = 0;
             var game = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-            function drawBoardDices() {
+            function drawGame() {
 		 game = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		 var buttonClasses;
                 for (var player = 0; player < 2; player++) {
+		    // draw board
 		    buttonClasses = buttonsClasses[player];
 		    if (player == playingNow) {
 		      buttonClasses += " board-dice-playing";
@@ -88,13 +91,23 @@
 			    }
                         }
                     }
+                    // draw remaining dices
+		    buttonClasses = buttonsClasses[player];
+		    if (player == playingNow) {
+		      buttonClasses += " remaining-dice-playing";
+		    }
+		    $("#player"+player).empty();
+		    for (var i = 0; i < playersData[player].dices; i++) {
+			$("#player"+player).append('<tr><td><div player="' + player + '" class="remaining-dice-button ' + buttonClasses + '"><img class="dice-button-image" src="icons/dice1.svg" width="100px" /></div></td></tr>')
+		    }
                 }
                 $('.board-dice-button[player="' + playingNow + '"]').button();
+                $('.remaining-dice-button[player="' + playingNow + '"]').button();
             }
             
             function nextPlayer() {
 	      playingNow = playingNow?0:1;
-	      drawBoardDices();
+	      drawGame();
             }
                         
             function initBoard() {
@@ -109,9 +122,19 @@
                 }
                 //$("#board td").css("width",0.9/boardSize+"%");
 
-                drawBoardDices();
+                drawGame();
                 
                 // adding event on dices
+                $("#player"+playingNow).on('click', '.remaining-dice-playing', function() {
+                    $.each([0, 1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 15], function(index, candidate) {
+			//console.log(index, candidate)
+			if (game[candidate]==0) {
+			  $("#board .cell-" + candidate).append('<div position="' + candidate + '" " fromValue="1" class="board-candidate-button ' + buttonsClasses[playingNow] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
+                        $(".board-candidate-button").button();
+			  // TODO not playing for the second player
+			}
+                    });
+                });
                 $("#board").on('click', '.board-dice-playing', function() {
                     var candidates = []
                     var pos = $(this).attr('position');
@@ -129,11 +152,15 @@
                         $("#board .cell-" + candidate).append('<div position="' + candidate + '" fromPosition="' + pos + '" fromValue="' + value + '" class="board-candidate-button ' + buttonsClasses[playingNow] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
                         $(".board-candidate-button").button();
                     });
+                    // TODO add an event on the selected dice for cancelling the move
 
                 });
                 $("#board").on('click', ".board-candidate-button", function() {
                     var pos = $(this).attr('position');
                     var fromPosition = $(this).attr('fromPosition');
+                    if (typeof(fromPosition) == "undefined") {
+			playersData[playingNow].dices--;
+                    }
                     var value = $(this).attr('fromValue');
 		     playersData[playingNow].game[fromPosition] = 0;
 		     playersData[playingNow].game[pos] = value;
@@ -147,6 +174,8 @@
     </head>
     <body>
         <h1>4 à 2</h1>
+        <table id="player0"></table>
         <table id="board"></table>
+        <table id="player1"></table>
     </body>
 </html>
