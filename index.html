@@ -21,7 +21,8 @@
             #board td { width:150px; height:150px; }
             .board-dice { width:140px; height: 140px;}
 
-	    #player0, #board, #player1 { float:left; margin-left:50px;margin-right:50px; }
+	    #player0-dices, #player0-actions, #board, #player1-dices, #player1-actions { float:left; margin-left:50px;margin-right:50px; }
+	    #player0-dices, #player0-actions, #player1-dices, #player1-actions { width:100px; }
             
             .button-primary.ui-state-default, .button-primary.ui-widget-content .button-primary.ui-state-default, .button-primary.ui-widget-header .button-primary.ui-state-default { border: 1px solid #407998; background: #004c75 50% 50% repeat-x; font-weight: normal; color: #ffffff; }
             .button-primary.ui-state-default a, .button-primary.ui-state-default a:link, .button-primary.ui-state-default a:visited { color: #ffffff; text-decoration: none; }
@@ -96,10 +97,11 @@
 		    if (player == playingNow) {
 		      buttonClasses += " remaining-dice-playing";
 		    }
-		    $("#player"+player).empty();
+		    $("#player"+player+'-dices').empty();
 		    for (var i = 0; i < playersData[player].dices; i++) {
-			$("#player"+player).append('<tr><td><div player="' + player + '" class="remaining-dice-button ' + buttonClasses + '"><img class="dice-button-image" src="icons/dice1.svg" width="100px" /></div></td></tr>')
+			$("#player"+player+'-dices').append('<tr><td><div player="' + player + '" class="remaining-dice-button ' + buttonClasses + '"><img class="dice-button-image" src="icons/dice1.svg" width="100px" /></div></td></tr>')
 		    }
+		    $("#player"+player+'-actions').html('<tr></tr>')
                 }
                 $('.board-dice-button[player="' + playingNow + '"]').button();
                 $('.remaining-dice-button[player="' + playingNow + '"]').button();
@@ -125,16 +127,19 @@
                 drawGame();
                 
                 // adding event on dices
-                $("#player0, #player1").on('click', '.remaining-dice-playing', function() {
+                // a dice is selected from the remaining dices for adding it on the board
+                $("#player0-dices, #player1-dices").on('click', '.remaining-dice-playing', function() {
+		    var player = $(this).attr('player');
                     $.each([0, 1, 2, 3, 4, 7, 8, 11, 12, 13, 14, 15], function(index, candidate) {
-			//console.log(index, candidate)
 			if (game[candidate]==0) {
-			  $("#board .cell-" + candidate).append('<div position="' + candidate + '" " fromValue="1" class="board-candidate-button ' + buttonsClasses[playingNow] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
+			  $("#board .cell-" + candidate).append('<div position="' + candidate + '" " fromValue="1" class="board-candidate-button ' + buttonsClasses[player] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
                         $(".board-candidate-button").button();
 			}
                     });
                 });
+                // a dice is selected on the board for moving
                 $("#board").on('click', '.board-dice-playing', function() {
+		    // enabling candidates cells for moving
                     var candidates = []
                     var pos = $(this).attr('position');
                     var value = $(this).attr('value');
@@ -151,13 +156,18 @@
                         $("#board .cell-" + candidate).append('<div position="' + candidate + '" fromPosition="' + pos + '" fromValue="' + value + '" class="board-candidate-button ' + buttonsClasses[playingNow] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
                         $(".board-candidate-button").button();
                     });
+                    // enabling incrementation action
+                    $('#player'+playingNow+'-actions').append('<tr><td><button id="dice-increment" player="' + playingNow + '" fromPosition="' + pos + '" fromValue="' + value + '" >Inc</button></td></tr>');
+                    $('#dice-increment').button();
                     // TODO add an event on the selected dice for cancelling the move
 
                 });
+                // a destination for moving a dice is selected
                 $("#board").on('click', ".board-candidate-button", function() {
                     var pos = $(this).attr('position');
                     var fromPosition = $(this).attr('fromPosition');
                     if (typeof(fromPosition) == "undefined") {
+			// the dice isn't moving from the board but from the remaining dices
 			playersData[playingNow].dices--;
                     }
                     var value = $(this).attr('fromValue');
@@ -165,7 +175,13 @@
 		     playersData[playingNow].game[pos] = value;
 		     nextPlayer();
                 });
-                // TODO add the increment action
+                // a selected dice on the board is requested to increment
+                $('#player0-actions, #player1-actions').on('click', "#dice-increment", function() {
+                    var fromPosition = $(this).attr('fromPosition');
+		     playersData[$(this).attr('player')].game[fromPosition]++;
+		     nextPlayer();
+                });
+                // TODO add specials actions
             }
             $(document).ready(function() {
                 initBoard();
@@ -174,8 +190,10 @@
     </head>
     <body>
         <h1>4 à 2</h1>
-        <table id="player0"></table>
+        <table id="player0-dices"></table>
+        <table id="player0-actions"></table>
         <table id="board"></table>
-        <table id="player1"></table>
+        <table id="player1-dices"></table>
+        <table id="player1-actions"></table>
     </body>
 </html>
