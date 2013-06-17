@@ -42,9 +42,13 @@
 
         </style>        
         <script type="text/javascript" charset="utf-8">
+            // moves contains for each cell, a list of tuples (destination, path).
+            //   path is an array of cells indexes containing the start point but not the endpoint
             var moves = [];
             $.getJSON('moves.json', function(data) {
               moves=data;
+              // TODO disable the game with a progress bar
+              console.log('moves.json loaded');
             });
             var cellWidth = 100,
                     diceSize = 80,
@@ -139,34 +143,7 @@
                 });
                 // a dice is selected on the board for moving
                 $("#board").on('click', '.board-dice-playing', function() {
-		    // enabling candidates cells for moving
-                    var candidates = []
-                    var pos = $(this).attr('position');
-                    var value = $(this).attr('value');
-                    for (var i = 0; i < moves[pos].length; i++) {
-                      var move = moves[pos][i];
-                      var moveDest = move[0]
-                      var movePath = move[1]
-                      var valid = game[moveDest]==0 && movePath.length <= value;
-                      for (var j = 1; j < movePath.length; j++) {
-                          if (game[movePath[j]] != 0) {
-                              valid = false;
-                              break;
-                          }
-                      }
-                      if (valid) {
-                        candidates.push(moveDest);
-                      }
-                    }
-                    $.each(candidates, function(index, candidate) {
-                        $("#board .cell-" + candidate).append('<div position="' + candidate + '" fromPosition="' + pos + '" fromValue="' + value + '" class="board-candidate-button ' + buttonsClasses[playingNow] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
-                        $(".board-candidate-button").button();
-                    });
-                    // enabling incrementation action
-                    $('#player'+playingNow+'-actions').append('<tr><td><button id="dice-increment" player="' + playingNow + '" fromPosition="' + pos + '" fromValue="' + value + '" >Inc</button></td></tr>');
-                    $('#dice-increment').button();
-                    // TODO add an event on the selected dice for cancelling the move
-
+                  selectedDiceEvent($(this));
                 });
                 // a destination for moving a dice is selected
                 $("#board").on('click', ".board-candidate-button", function() {
@@ -193,6 +170,42 @@
 		    // TODO
                 });
             }
+            
+            function selectedDiceEvent(button) {
+                    // enabling candidates cells for moving
+                    var candidates = []
+                    var pos = button.attr('position');
+                    var value = button.attr('value');
+                    for (var i = 0; i < moves[pos].length; i++) {
+                      var move = moves[pos][i];
+                      var moveDest = move[0]
+                      var movePath = move[1]
+                      // is the destination available and reachable regarding the dice value? and is the destination not yet selected as a candidate?
+                      if (game[moveDest]==0 && movePath.length <= value && candidates.indexOf(moveDest)==-1) {
+                        // if yes, we check that all the cells of the path are available
+                        var valid = true;
+                        for (var j = 1; j < movePath.length; j++) {
+                            if (game[movePath[j]] != 0) {
+                                valid = false;
+                                break;
+                            }
+                        }
+                        // if OK, this target can be a choice
+                        if (valid) {
+                          candidates.push(moveDest);
+                        }
+                      }
+                    }
+                    $.each(candidates, function(index, candidate) {
+                        $("#board .cell-" + candidate).append('<div position="' + candidate + '" fromPosition="' + pos + '" fromValue="' + value + '" class="board-candidate-button ' + buttonsClasses[playingNow] + '"><img class="dice-button-image" src="icons/dice0.svg" width="100px" /></div>');
+                        $(".board-candidate-button").button();
+                    });
+                    // enabling incrementation action
+                    $('#player'+playingNow+'-actions').append('<tr><td><button id="dice-increment" player="' + playingNow + '" fromPosition="' + pos + '" fromValue="' + value + '" >Inc</button></td></tr>');
+                    $('#dice-increment').button();
+                    // TODO add an event on the selected dice for cancelling the move            
+            }
+            
             $(document).ready(function() {
                 initBoard();
             });
