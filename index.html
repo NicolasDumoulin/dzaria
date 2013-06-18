@@ -177,6 +177,7 @@
                     lastSelectedCell = -1;
                 } else {
                     lastSelectedCell = value;
+                    $('.special-Random-playing').attr('disabled', true);
                     for (var i = 0; i < moves[pos].length; i++) {
                       var move = moves[pos][i];
                       var moveDest = move[0]
@@ -204,6 +205,7 @@
                     // enabling incrementation action
                     $('#player'+playingNow+'-actions').append('<tr><td><button id="dice-increment" player="' + playingNow + '" fromPosition="' + pos + '" fromValue="' + value + '" >Inc</button></td></tr>');
                     $('#dice-increment').button();
+                    // TODO enabling diago and +1 specials actions
                 }
             }
             
