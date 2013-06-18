@@ -62,6 +62,7 @@
             // which player is playing now
             var playingNow = 0;
             var game = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            var lastSelectedCell = -1;
 
             function drawGame() {
                   game = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -163,10 +164,19 @@
             }
             
             function selectedDiceEvent(button) {
-                    // enabling candidates cells for moving
-                    var candidates = []
-                    var pos = button.attr('position');
-                    var value = button.attr('value');
+                // enabling candidates cells for moving
+                var candidates = []
+                var pos = button.attr('position');
+                var value = button.attr('value');
+                if (value == lastSelectedCell) {
+                  value = -1;
+                }
+                drawGame();
+                if (value == -1) {
+                    // if the dice was already selected, we cancel the move                            
+                    lastSelectedCell = -1;
+                } else {
+                    lastSelectedCell = value;
                     for (var i = 0; i < moves[pos].length; i++) {
                       var move = moves[pos][i];
                       var moveDest = move[0]
@@ -194,7 +204,7 @@
                     // enabling incrementation action
                     $('#player'+playingNow+'-actions').append('<tr><td><button id="dice-increment" player="' + playingNow + '" fromPosition="' + pos + '" fromValue="' + value + '" >Inc</button></td></tr>');
                     $('#dice-increment').button();
-                    // TODO add an event on the selected dice for cancelling the move            
+                }
             }
             
             function moveDiceEvent(button) {
